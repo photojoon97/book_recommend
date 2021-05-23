@@ -1,4 +1,4 @@
-#한지성, 김윤태
+#2020039043 한지성, 2020039064 김윤태
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
