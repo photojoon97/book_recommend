@@ -11,59 +11,49 @@ Name:GetData
 """
 
 import csv
-# 설치한 selenium에서 webdriver를 import
 from selenium import webdriver
-#from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
-
-
 import time
-
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 import pyperclip
 
-from selenium.webdriver.chrome.options import Options
-
-import requests
-
-def clipboard_input(user_xpath, user_input):
-        temp_user_input = pyperclip.paste()  # 사용자 클립보드를 따로 저장
+def clipboard_input(user_xpath, user_input): #id, password clipboard
+        temp_user_input = pyperclip.paste()
 
         pyperclip.copy(user_input)
         driver.find_element_by_xpath(user_xpath).click()
         ActionChains(driver).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
 
-        pyperclip.copy(temp_user_input)  # 사용자 클립보드에 저장 된 내용을 다시 가져 옴
+        pyperclip.copy(temp_user_input)  
         time.sleep(1)
         
-def book_crawling(driver):
+def book_crawling(driver): #Crawl book titles and introductions(abstract) through 20(index) book links of url(driver.get(url)) on a page(1~5pages)
        bsObject=BeautifulSoup(driver.page_source,'html.parser')
        book_page_urls=[]
-       for index in range(0,20):
-           
+       for index in range(0,20): #collect 20(index) book links
            dl_data=bsObject.find('dt',{'id':"book_title_"+str(index)})
-           
            link=dl_data.select('a')[0].get('href')
-          
            book_page_urls.append(link)
-           
-       for index,book_page_url in enumerate(book_page_urls):  
-           
-           driver.get(book_page_url)
-          
-           bsObject=BeautifulSoup(driver.page_source,'html.parser')
-            
-           dl_title=bsObject.find('div',{'class':'book_info'})
-           title=dl_title.select('a')[0].get_text()
-           url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
-           
-           book_info.append([title,url])
+       
+       i=0
+       while i<20: #collect data through each book link
+           try:        
+               driver.get(book_page_urls[i])
+               bsObject=BeautifulSoup(driver.page_source,'html.parser')
+               dl_title=bsObject.find('div',{'class':'book_info'})
+               title=dl_title.select('a')[0].get_text()
+               url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
+               book_info.append([title,url])
+              
+           except:
+               print('error')
+           i=i+1           
        return book_info
                 
 
-def save_data(book_info):
-        csvFile=open("C:/Users/yimso/Downloads/etc/noveltest.csv",'wt',encoding='utf-8-sig',newline='')#a옵션...
+def save_data(book_info): #save crawling data
+        csvFile=open("C:/Users/yimso/Downloads/etc/crawlingdata.csv",'wt',encoding='utf-8-sig',newline='')
         writer=csv.writer(csvFile)
         columns=['title','abstract']
         writer.writerow(columns)
@@ -72,7 +62,7 @@ def save_data(book_info):
         finally:
             csvFile.close
             
-def url():
+def url(): #read (top 100 of each genre)url list 
     csvfile = open('C:/Users/yimso/Downloads/etc/url.csv', 'r', encoding='utf-8-sig')
     rdr = csv.reader(csvfile)
     for line in rdr:
@@ -81,61 +71,45 @@ def url():
     csvfile.close()
     return url_list    
         
+    
 
 if __name__ == "__main__":
+        #Login(to access adult book link)
         driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
-        # 접속할 url
         Url = 'https://nid.naver.com/nidlogin.login'
-
-        # 접속 시도
         driver.get(Url)
         login = {
-            "id" : "testid",
-            "pw" : "testpw"
+            "id" : "<<insert your ID>>",
+            "pw" : "<<insert your Password>>"
             }
-        
-        # 아이디와 비밀번호를 입력합니다.
-        time.sleep(1)
+        time.sleep(1) 
         clipboard_input('//*[@id="id"]', login.get("id"))
-        
-        time.sleep(1.5) 
+        time.sleep(1.5)
         clipboard_input('//*[@id="pw"]', login.get("pw"))
         driver.find_element_by_xpath('//*[@id="log.login"]').click()
-
+        
         book_info=[]
         book_info_list=[]
         url_list=[]
-        for i in range(1,195):
+        l=url()
+        i=0
+        while i<195:
             try:
-                l=url()
-                
-                for page in range(1,6):
-                    utx=str(l[i]).replace("['", "")
+                time.sleep(1)
+                for page in range(1,6): # to access 5pages
+                    utx=str(l[i]).replace("['", "") # pre-processing url list
                     utx1=utx.replace("']", "")
-                    
                     url=utx1+str(page)
                     time.sleep(0.5)
-                    url='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
                     driver.implicitly_wait(30)
-                    
                     driver.get(url)
+                    
                     d=book_crawling(driver)
+                    
                     book_info_list=d
                     save_data(book_info_list)
                     time.sleep(1)
             
             except:
-                print('done')
-
-
-    
-
-    
-        
-
-
-
-
-
-    
-
+                print('error')
+            i=i+1
