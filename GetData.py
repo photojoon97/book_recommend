@@ -71,11 +71,16 @@ def save_data(book_info):
             writer.writerows(book_info)
         finally:
             csvFile.close
-
-
-def move_page(page):
-        path='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
-        return path
+            
+def url():
+    csvfile = open('C:/Users/yimso/Downloads/etc/url.csv', 'r', encoding='utf-8-sig')
+    rdr = csv.reader(csvfile)
+    for line in rdr:
+        url_list.append(line)
+    
+    csvfile.close()
+    return url_list    
+        
 
 if __name__ == "__main__":
         driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
@@ -96,27 +101,32 @@ if __name__ == "__main__":
         time.sleep(1.5) 
         clipboard_input('//*[@id="pw"]', login.get("pw"))
         driver.find_element_by_xpath('//*[@id="log.login"]').click()
+
         book_info=[]
         book_info_list=[]
-        try:
-            for page in range(1,6):
-                time.sleep(0.5)
+        url_list=[]
+        for i in range(1,195):
+            try:
+                l=url()
                 
-                url='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
-                
-                
-                driver.implicitly_wait(30)
-                
-                driver.get(url)
-                
-                d=book_crawling(driver)
-                book_info_list=d
-                save_data(book_info_list)
-                
-                        
+                for page in range(1,6):
+                    utx=str(l[i]).replace("['", "")
+                    utx1=utx.replace("']", "")
+                    
+                    url=utx1+str(page)
+                    time.sleep(0.5)
+                    url='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
+                    driver.implicitly_wait(30)
+                    
+                    driver.get(url)
+                    d=book_crawling(driver)
+                    book_info_list=d
+                    save_data(book_info_list)
+                    time.sleep(1)
             
-        except:
-            save_data(book_info_list) 
+            except:
+                print('done')
+
 
     
 
