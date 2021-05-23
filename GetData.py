@@ -10,69 +10,117 @@ Name:GetData
 --------------------------------------
 """
 
-
 import csv
+# 설치한 selenium에서 webdriver를 import
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+#from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+
 
 import time
 
-def book_crawling():
-        for page in range(1,6):
-            print(page)
-            url=move_page(page)
-            print(url)
-            driver=webdriver.Chrome(ChromeDriverManager().install())#웹드라이버 정의
-            driver.implicitly_wait(30) #웹페이지 파싱될때까지 최대 30초 기다림.
-            driver.get(url)
-            bsObject=BeautifulSoup(driver.page_source,'html.parser')
-            book_page_urls=[]
-            for index in range(0,20):
-                dl_data=bsObject.find('dt',{'id':"book_title_"+str(index)})
-                link=dl_data.select('a')[0].get('href')
-                book_page_urls.append(link)
-                
-                
-            for index,book_page_url in enumerate(book_page_urls):   
-                driver.get(book_page_url)
-                bsObject=BeautifulSoup(driver.page_source,'html.parser')
-            
-                dl_title=bsObject.find('div',{'class':'book_info'})
-                title=dl_title.select('a')[0].get_text()
-                url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
-                print(title)
-                print(url)
-                book_info.append([title,url])
-                #book_info={title:url}
-                #print(book_info[0])
-                #print(book_info[1])
-                #book_info_list.append(book_info)
-        return book_info
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+import pyperclip
 
-def save_data():
-        csvFile=open("C:/Users/yimso/Downloads/etc/novel1.csv",'wt',encoding='utf-8-sig',newline='')#a옵션...
+from selenium.webdriver.chrome.options import Options
+
+import requests
+
+def clipboard_input(user_xpath, user_input):
+        temp_user_input = pyperclip.paste()  # 사용자 클립보드를 따로 저장
+
+        pyperclip.copy(user_input)
+        driver.find_element_by_xpath(user_xpath).click()
+        ActionChains(driver).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+
+        pyperclip.copy(temp_user_input)  # 사용자 클립보드에 저장 된 내용을 다시 가져 옴
+        time.sleep(1)
+        
+def book_crawling(driver):
+       bsObject=BeautifulSoup(driver.page_source,'html.parser')
+       book_page_urls=[]
+       for index in range(0,20):
+           
+           dl_data=bsObject.find('dt',{'id':"book_title_"+str(index)})
+           
+           link=dl_data.select('a')[0].get('href')
+          
+           book_page_urls.append(link)
+           
+       for index,book_page_url in enumerate(book_page_urls):  
+           
+           driver.get(book_page_url)
+          
+           bsObject=BeautifulSoup(driver.page_source,'html.parser')
+            
+           dl_title=bsObject.find('div',{'class':'book_info'})
+           title=dl_title.select('a')[0].get_text()
+           url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
+           
+           book_info.append([title,url])
+       return book_info
+                
+
+def save_data(book_info):
+        csvFile=open("C:/Users/yimso/Downloads/etc/noveltest.csv",'wt',encoding='utf-8-sig',newline='')#a옵션...
         writer=csv.writer(csvFile)
         columns=['title','abstract']
         writer.writerow(columns)
         try:
-            #for i in enumerate(book_info):
             writer.writerows(book_info)
         finally:
             csvFile.close
 
 
 def move_page(page):
-        path='http://book.naver.com/category/index.nhn?cate_code=330090&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
+        path='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
         return path
 
+if __name__ == "__main__":
+        driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
+        # 접속할 url
+        Url = 'https://nid.naver.com/nidlogin.login'
 
+        # 접속 시도
+        driver.get(Url)
+        login = {
+            "id" : "testid",
+            "pw" : "testpw"
+            }
+        
+        # 아이디와 비밀번호를 입력합니다.
+        time.sleep(1)
+        clipboard_input('//*[@id="id"]', login.get("id"))
+        
+        time.sleep(1.5) 
+        clipboard_input('//*[@id="pw"]', login.get("pw"))
+        driver.find_element_by_xpath('//*[@id="log.login"]').click()
+        book_info=[]
+        book_info_list=[]
+        try:
+            for page in range(1,6):
+                time.sleep(0.5)
+                
+                url='http://book.naver.com/category/index.nhn?cate_code=100010010&tab=top100&list_type=list&sort_type=publishday&page='+str(page)
+                
+                
+                driver.implicitly_wait(30)
+                
+                driver.get(url)
+                
+                d=book_crawling(driver)
+                book_info_list=d
+                save_data(book_info_list)
+                
+                        
+            
+        except:
+            save_data(book_info_list) 
 
-book_info=[]
-try:
-        book_crawling()
-except:
-        save_data()    
+    
+
+    
         
 
 
