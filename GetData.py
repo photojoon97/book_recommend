@@ -47,8 +47,12 @@ def book_crawling(driver): #Crawl book titles and introductions(abstract) throug
                url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
                a=str(url).replace('\n','') #remove enter&','
                b=str(a).replace(',','')
-               print(b)
-               book_info.append([title,b])
+               GPA = bsObject.find('dt', text='평점').find_next_siblings('dd')[0].text.strip() #written by 한지성(21.05.27)
+               GPA=str(GPA).replace('별점 ','')
+               GPA=str(GPA).replace('점','')
+               reviewnum = bsObject.find('dt', text='리뷰').find_next_siblings('dd')[0].text.strip() #written by 한지성(21.05.27)
+               reviewnum=str(reviewnum).replace('건','')
+               book_info.append([title,b,GPA,reviewnum])
               
            except:
                print('error')
@@ -59,7 +63,7 @@ def book_crawling(driver): #Crawl book titles and introductions(abstract) throug
 def save_data(book_info): #save crawling data
         csvFile=open("C:/Users/yimso/Downloads/etc/crawlingdata.csv",'wt',encoding='utf-8-sig',newline='')
         writer=csv.writer(csvFile)
-        columns=['title','abstract']
+        columns=['title','abstract','grade','review#']
         writer.writerow(columns)
         try:
             writer.writerows(book_info)
@@ -83,8 +87,8 @@ driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
 Url = 'https://nid.naver.com/nidlogin.login'
 driver.get(Url)
 login = {
-    "id" : "id",
-    "pw" : "pw"
+    "id" : "<<insert your ID>>",
+    "pw" : "<<insert your Password>>"
     }
 time.sleep(1) 
 clipboard_input('//*[@id="id"]', login.get("id"))
@@ -101,19 +105,19 @@ while i<195:
     try:
         time.sleep(1)
         for page in range(1,6): # to access 5pages
-        utx=str(l[i]).replace("['", "") # pre-processing url list
-        utx1=utx.replace("']", "")
-        url=utx1+str(page)
-        time.sleep(0.5)
-        driver.implicitly_wait(30)
-        driver.get(url)
+            utx=str(l[i]).replace("['", "") # pre-processing url list
+            utx1=utx.replace("']", "")
+            url=utx1+str(page)
+            time.sleep(0.5)
+            driver.implicitly_wait(30)
+            driver.get(url)
+            
+            d=book_crawling(driver)
+            
+            book_info_list=d
+            save_data(book_info_list)
+            time.sleep(1)
         
-        d=book_crawling(driver)
-        
-        book_info_list=d
-        save_data(book_info_list)
-        time.sleep(1)
-        
-        except:
-            print('error')
-        i=i+1
+    except:
+        print('error')
+    i=i+1
