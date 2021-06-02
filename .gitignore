@@ -1,2 +1,5 @@
 #.csv 파일은 모두 무시
 *.csv
+*.npz
+*.png
+*.jpg

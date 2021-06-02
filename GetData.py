@@ -17,6 +17,7 @@ import time
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 import pyperclip
+import re
 
 def clipboard_input(user_xpath, user_input): #id, password clipboard
         temp_user_input = pyperclip.paste()
@@ -44,7 +45,14 @@ def book_crawling(driver): #Crawl book titles and introductions(abstract) throug
                dl_title=bsObject.find('div',{'class':'book_info'})
                title=dl_title.select('a')[0].get_text()
                url=bsObject.find('div',{'id':'bookIntroContent'}).get_text()
-               book_info.append([title,url])
+               a=str(url).replace('\n','') #remove enter&','
+               b=str(a).replace(',','')
+               GPA = bsObject.find('dt', text='평점').find_next_siblings('dd')[0].text.strip() #written by 한지성(21.05.27)
+               GPA=str(GPA).replace('별점 ','')
+               GPA=str(GPA).replace('점','')
+               reviewnum = bsObject.find('dt', text='리뷰').find_next_siblings('dd')[0].text.strip() #written by 한지성(21.05.27)
+               reviewnum=str(reviewnum).replace('건','')
+               book_info.append([title,b,GPA,reviewnum])
               
            except:
                print('error')
@@ -55,7 +63,7 @@ def book_crawling(driver): #Crawl book titles and introductions(abstract) throug
 def save_data(book_info): #save crawling data
         csvFile=open("C:/Users/yimso/Downloads/etc/crawlingdata.csv",'wt',encoding='utf-8-sig',newline='')
         writer=csv.writer(csvFile)
-        columns=['title','abstract']
+        columns=['title','abstract','grade','review#']
         writer.writerow(columns)
         try:
             writer.writerows(book_info)
@@ -73,43 +81,43 @@ def url(): #read (top 100 of each genre)url list
         
     
 
-if __name__ == "__main__":
-        #Login(to access adult book link)
-        driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
-        Url = 'https://nid.naver.com/nidlogin.login'
-        driver.get(Url)
-        login = {
-            "id" : "<<insert your ID>>",
-            "pw" : "<<insert your Password>>"
-            }
-        time.sleep(1) 
-        clipboard_input('//*[@id="id"]', login.get("id"))
-        time.sleep(1.5)
-        clipboard_input('//*[@id="pw"]', login.get("pw"))
-        driver.find_element_by_xpath('//*[@id="log.login"]').click()
-        
-        book_info=[]
-        book_info_list=[]
-        url_list=[]
-        l=url()
-        i=0
-        while i<195:
-            try:
-                time.sleep(1)
-                for page in range(1,6): # to access 5pages
-                    utx=str(l[i]).replace("['", "") # pre-processing url list
-                    utx1=utx.replace("']", "")
-                    url=utx1+str(page)
-                    time.sleep(0.5)
-                    driver.implicitly_wait(30)
-                    driver.get(url)
-                    
-                    d=book_crawling(driver)
-                    
-                    book_info_list=d
-                    save_data(book_info_list)
-                    time.sleep(1)
+
+#Login(to access adult book link)
+driver = webdriver.Chrome(r'C:\Users\yimso\Downloads\chromedriver.exe')
+Url = 'https://nid.naver.com/nidlogin.login'
+driver.get(Url)
+login = {
+    "id" : "<<insert your ID>>",
+    "pw" : "<<insert your Password>>"
+    }
+time.sleep(1) 
+clipboard_input('//*[@id="id"]', login.get("id"))
+time.sleep(1.5)
+clipboard_input('//*[@id="pw"]', login.get("pw"))
+driver.find_element_by_xpath('//*[@id="log.login"]').click()
+
+book_info=[]
+book_info_list=[]
+url_list=[]
+l=url()
+i=0
+while i<195:
+    try:
+        time.sleep(1)
+        for page in range(1,6): # to access 5pages
+            utx=str(l[i]).replace("['", "") # pre-processing url list
+            utx1=utx.replace("']", "")
+            url=utx1+str(page)
+            time.sleep(0.5)
+            driver.implicitly_wait(30)
+            driver.get(url)
             
-            except:
-                print('error')
-            i=i+1
+            d=book_crawling(driver)
+            
+            book_info_list=d
+            save_data(book_info_list)
+            time.sleep(1)
+        
+    except:
+        print('error')
+    i=i+1
