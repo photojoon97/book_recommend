@@ -3,3 +3,7 @@
 *.npz
 *.png
 *.jpg
+weighted_review.py
+moduleTest.py
+mecabTest.py
+add_score.py

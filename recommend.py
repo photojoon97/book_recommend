@@ -12,7 +12,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import scipy.sparse #TF-IDF matrix를 내보내기 위함
 from konlpy.tag import Mecab
-import string
 import time
 import csv
 
@@ -163,8 +162,6 @@ data.drop(data.loc[data['score'] < c].index, inplace=True) #전체 영화 평균
 data = preprocessing(data) #데이터 전처리
 
 cosine_sim = calc_cosine_sim(data) #코사인 유사도 계산
-
-print("실행시간 : ",time.time() - start)
 
 recommended_book_list = []
 
