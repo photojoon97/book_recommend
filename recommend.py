@@ -11,8 +11,8 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import scipy.sparse #TF-IDF matrix를 내보내기 위함
-from konlpy.tag import Okt
-from eunjeon import Mecab 
+from konlpy.tag import Okt, Mecab
+#import MeCab
 import string
 import time
 import csv
@@ -58,8 +58,10 @@ def preprocessing(data):
 
     print("\ndata preprocessing...\n")
     #텍스트 데이터 전처리 ,명사만 추출 (추후 동사 추출과 불용어 제거)
-    okt = Okt()
-
+    #okt = Okt()
+    #mecab = MeCab.Tagger('-d /usr/local/lib/mecab/dic/mecab-ko-dic')
+    mecab = Mecab()
+    
     #불용어 처리 단어 불러오기
     temp = []
     f = open('stopwords.csv', 'r', encoding='utf-8')
@@ -70,8 +72,10 @@ def preprocessing(data):
     f.close()
 
     for i in data.index:
-        word_token = okt.pos(data.at[i,'content'], norm=True, stem=True)
-        filtering = [x for x,y in word_token if y in ['Noun', 'Adjective', 'Verb']] # 명사, 형용사, 동사만 추출
+        #word_token = okt.pos(data.at[i,'content'], norm=True, stem=True)
+        #filtering = [x for x,y in word_token if y in ['Noun', 'Adjective', 'Verb']] # 명사, 형용사, 동사만 추출
+        word_token = mecab.pos(data.at[i,'content'])
+        filtering = [x for x,y in word_token if y in ['NNG', 'NNP', 'VV', 'VA' ]]  #일반명사, 고유명사, 동사, 형용사
 
         #공백 제거
         new_filtering = [i.replace(' ', '') for i in filtering]
@@ -91,19 +95,18 @@ def cosine(data):
     print("\nCalculating cosine similarity\n")
     
     ##토큰화
-    #tfidf = TfidfVectorizer()
-    #tfidf_matrix = tfidf.fit_transform(data['content']) #줄거리를 기반으로 ~
-    #print(tfidf_matrix.shape)
-    #print('TF-IDF Type : ', type(tfidf_matrix)) #matrix 타입 확인
-
+    tfidf = TfidfVectorizer()
+    tfidf_matrix = tfidf.fit_transform(data['content']) #줄거리를 기반으로 ~
+    print(tfidf_matrix.shape)
+    print('TF-IDF Type : ', type(tfidf_matrix)) #matrix 타입 확인
     #매트릭스 내보내기
-    #scipy.sparse.save_npz('./tf-idf_matrix.npz',tfidf_matrix) #백터화 이후 재실행 시 실행시간 단축을 위해 ~
+    scipy.sparse.save_npz('./tf-idf_matrix.npz',tfidf_matrix) #백터화 이후 재실행 시 실행시간 단축을 위해 ~
 
     #매트릭스 불러오기
-    tfidf_matrix = scipy.sparse.load_npz('./tf-idf_matrix.npz')
+    #tfidf_matrix = scipy.sparse.load_npz('./tf-idf_matrix.npz')
 
     #코사인 유사도
-    #cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     print("\ncosine_sim's type : ",type(cosine_sim), end='\n')
     print("\ncosine sim : \n", cosine_sim, end='\n\n')
@@ -121,7 +124,7 @@ data['title'] = data['title'].fillna('')#fillna() 결측치 대체함수, dropna
 data['content'] = data['content'].fillna('')
 
 
-#data = preprocessing(data)
+data = preprocessing(data)
 
 cosine_sim = cosine(data)
 
