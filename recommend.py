@@ -6,6 +6,7 @@ import scipy.sparse #TF-IDF matrix를 내보내기 위함
 from konlpy.tag import Mecab
 import time
 import csv
+import os
 
 class Recommend:
     def __init__(self, data_link,stopwords_link) -> None:
@@ -117,7 +118,7 @@ class Recommend:
         #scipy.sparse.save_npz('./tf-idf_matrix.npz',tfidf_matrix) #백터화 이후 재실행 시 실행시간 단축을 위해 ~
 
         #매트릭스 불러오기
-        tfidf_matrix = scipy.sparse.load_npz('./tf-idf_matrix.npz')
+        tfidf_matrix = scipy.sparse.load_npz(os.path.abspath('./tf-idf_matrix.npz'))
 
         #코사인 유사도
         self.cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)

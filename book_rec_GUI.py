@@ -3,10 +3,11 @@ from tkinter import ttk #for Combobox
 from tkinter import Scrollbar, Widget, font
 from tkinter.constants import END
 from recommend import *
+import os
 
 class Application(tk.Frame, Recommend):
     def __init__(self, master=None):
-        Recommend.__init__(self,'./extract_data_add_score.csv','stopwords.csv') #부모 클래스 생성자 호출
+        Recommend.__init__(self, os.path.abspath('./extract_data_add_score.csv'),os.path.abspath('./stopwords.csv')) #부모 클래스 생성자 호출
         super().__init__(master)
         self.master = master
         self.pack()
@@ -101,9 +102,10 @@ class Application(tk.Frame, Recommend):
         self.btn_export = tk.Button(root, text="내보내기", command=self.export_result)
         self.btn_export.place(x=80, y = 430)
         
-
-root = tk.Tk()
-app = Application(master=root)
-app.master.title('BOOK RECOMMEND')
-app.master.geometry("600x500")
-app.mainloop()
+if __name__ == "__main__":
+    print(os.path.abspath('./extract_data_add_score.csv'),'\n',os.path.abspath('./stopwords.csv'))
+    root = tk.Tk()
+    app = Application(master=root)
+    app.master.title('BOOK RECOMMEND')
+    app.master.geometry("600x500")
+    app.mainloop()
